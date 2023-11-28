@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -27,8 +26,8 @@ type ImageManifest struct {
 type ImagesManifest []ImageManifest
 
 type (
-	TemplatesManifest map[string]string
-	DepsManifest      []string
+	DataManifest map[string]string
+	DepsManifest []string
 )
 
 type HelmResultMetadata struct {
@@ -46,7 +45,7 @@ type HelmChart struct {
 }
 
 type Arguments struct {
-	TemplatesManifest  string
+	DataManifest       string
 	Chart              string
 	Values             string
 	DepsManifest       string
@@ -62,7 +61,7 @@ type Arguments struct {
 func ParseArgs() *Arguments {
 	var args Arguments
 
-	flag.StringVar(&args.TemplatesManifest, "templates_manifest", "", "A helm file containing a list of all helm template files")
+	flag.StringVar(&args.DataManifest, "data_manifest", "", "A helm file containing a list of all helm data files")
 	flag.StringVar(&args.Chart, "chart", "", "The helm `chart.yaml` file")
 	flag.StringVar(&args.Values, "values", "", "The helm `values.yaml` file.")
 	flag.StringVar(&args.DepsManifest, "deps_manifest", "", "A file containing a list of all helm dependency (`charts/*.tgz`) files")
@@ -298,44 +297,15 @@ func InstallHelmContent(workingDir string, stampedChartContent string, stampedVa
 		log.Fatal(err)
 	}
 
-	var templates TemplatesManifest
-	err = json.Unmarshal(manifestContent, &templates)
+	var data DataManifest
+	err = json.Unmarshal(manifestContent, &data)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	templatesDir := path.Join(workingDir, "templates")
-	templatesRoot := ""
-
 	// Copy all templates
-	for templatePath, templateShortPath := range templates {
-		// Locate the templates directory so we can start copying files
-		// into the new templates directory at the right location
-		if len(templatesRoot) == 0 {
-			current := templateShortPath
-			for {
-				if len(current) == 0 {
-					log.Fatal("Failed to find templates directory for ", templateShortPath)
-				}
-				parent := path.Dir(current)
-				if path.Base(parent) == "templates" {
-					templatesRoot = parent
-					break
-				}
-				current = parent
-			}
-		}
-
-		if !strings.HasPrefix(templateShortPath, templatesRoot) {
-			log.Fatalf("A template file has an unexpected prefix %s does not start with %s", templateShortPath, templatesRoot)
-		}
-
-		targetFile, err := filepath.Rel(templatesRoot, templateShortPath)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		CopyFile(templatePath, path.Join(templatesDir, targetFile))
+	for fullPath, shortPath := range data {
+		CopyFile(fullPath, path.Join(workingDir, shortPath))
 	}
 
 	// Copy over any dependency chart files
@@ -435,7 +405,7 @@ func main() {
 	// Create a directory in which to run helm package
 	chartName := GetChartName(StampedChartContent)
 	tmpPath := path.Join(dir, chartName)
-	InstallHelmContent(tmpPath, StampedChartContent, StampedValuesContent, args.TemplatesManifest, args.DepsManifest)
+	InstallHelmContent(tmpPath, StampedChartContent, StampedValuesContent, args.DataManifest, args.DepsManifest)
 
 	// Build the helm package
 	command := exec.Command(path.Join(cwd, args.Helm), "package", ".")
