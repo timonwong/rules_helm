@@ -28,7 +28,7 @@ def helm_chart(name, images = [], deps = None, tags = [], install_name = None, *
         deps = deps,
         images = images,
         tags = tags,
-        templates = native.glob(["templates/**"]),
+        data = native.glob(["templates/**"]),
         values = "values.yaml",
         **kwargs
     )
@@ -61,32 +61,3 @@ def helm_chart(name, images = [], deps = None, tags = [], install_name = None, *
         package = name,
         tags = depset(tags + ["manual"]).to_list(),
     )
-
-def chart_content(
-        name,
-        api_version = "v2",
-        description = "A Helm chart for Kubernetes by Bazel.",
-        type = "application",
-        version = "0.1.0",
-        app_version = "0.16.0"):
-    """A convenience wrapper for defining Chart.yaml files with [helm_package.chart_json](#helm_package-chart_json).
-
-    Args:
-        name (str): The name of the chart
-        api_version (str, optional): The Helm API version
-        description (str, optional): A descritpion of the chart.
-        type (str, optional): The chart type.
-        version (str, optional): The chart version.
-        app_version (str, optional): The version number of the application being deployed.
-
-    Returns:
-        str: A json encoded string which represents `Chart.yaml` contents.
-    """
-    return json.encode({
-        "apiVersion": api_version,
-        "appVersion": app_version,
-        "description": description,
-        "name": name,
-        "type": type,
-        "version": version,
-    })

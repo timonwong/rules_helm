@@ -2,7 +2,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary")
 
 go_binary(
     name = "packager",
-    srcs = ["packager.go"],
+    srcs = ["packager.go", "tpl.go"],
     visibility = ["//visibility:public"],
     deps = ["@go_yaml_yaml"],
 )

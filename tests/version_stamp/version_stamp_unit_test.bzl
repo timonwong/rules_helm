@@ -38,7 +38,7 @@ def version_stamp_test_suite(name):
         helm_package(
             name = "version_stamp.{}".format(name),
             chart = "Chart.yaml",
-            templates = native.glob(["templates/**"]),
+            data = native.glob(["templates/**"]),
             values = "values.yaml",
             stamp = stamp_value,
         )
@@ -61,6 +61,7 @@ def version_stamp_test_suite(name):
     "name": "version_stamp",
     "version": "0.1.0-STABLE-STAMP-VALUE-VOLATILE-STAMP-VALUE"
 }
+
 """.splitlines(),
     )
 
@@ -78,6 +79,7 @@ def version_stamp_test_suite(name):
     "name": "version_stamp",
     "version": "0.1.0-stable-volatile"
 }
+
 """.splitlines(),
     )
 
